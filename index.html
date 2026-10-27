@@ -102,7 +102,10 @@ details[open] summary::before{content:"−"}
 dl.facts{display:grid;grid-template-columns:170px 1fr;gap:8px 16px;margin:10px 0 2px;font-size:14px}
 dl.facts dt{font:500 12px/1.4 var(--f-mono);letter-spacing:.03em;color:var(--muted);text-transform:uppercase;padding-top:2px}
 dl.facts dd{margin:0;min-width:0}
-.permalink{display:inline-block;margin-top:8px;font:500 12px/1.2 var(--f-body);color:var(--muted);text-decoration:none}
+.topic-links{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px}
+.permalink,.discuss{display:inline-block;font:500 12px/1.2 var(--f-body);color:var(--muted);text-decoration:none}
+.discuss{color:var(--accent)}
+.discuss:hover{text-decoration:underline}
 .permalink:hover,.permalink:focus-visible{color:var(--accent)}
 .topic.flash{animation:flash 2.4s ease-out}
 @keyframes flash{0%,35%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
@@ -575,9 +578,9 @@ try { const raw = localStorage.getItem(KEY); if (raw) marks = new Set(JSON.parse
 function saveMarks(){ try { localStorage.setItem(KEY, JSON.stringify([...marks])); } catch (e) {} }
 
 // Отметки кодируются битовой маской по порядку тем: 8 байт -> base64url (11 символов), префикс "t".
-function encodeMarks(){
+function encodeMarks(set = marks){
   const bytes = new Uint8Array(8);
-  T.forEach((t, i) => { if (marks.has(t.n)) bytes[i >> 3] |= 1 << (i & 7); });
+  T.forEach((t, i) => { if (set.has(t.n)) bytes[i >> 3] |= 1 << (i & 7); });
   let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b));
   return 't' + btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -635,7 +638,10 @@ function topicHTML(t){
     + '<dt>Результат работы</dt><dd>' + esc(t.res) + '</dd>'
     + '<dt>Научная перспектива</dt><dd>' + esc(t.phd) + '</dd>'
     + '<dt>Специальность</dt><dd>' + esc(t.s) + '</dd>'
-    + '</dl><a class="permalink" href="#t' + t.n.replace('.', '-') + '">' + LINK_LABEL + '</a></details></article>';
+    + '</dl><div class="topic-links"><a class="permalink" href="#t' + t.n.replace('.', '-') + '">' + LINK_LABEL + '</a>'
+    + (BOT_USERNAME ? '<a class="discuss" href="https://t.me/' + BOT_USERNAME + '?start=' + encodeMarks(new Set([t.n]))
+      + '" target="_blank" rel="noopener">💬 Обсудить эту тему в Telegram</a>' : '')
+    + '</div></details></article>';
 }
 
 const list = document.getElementById('list');
