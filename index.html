@@ -12,6 +12,12 @@
 <meta property="og:description" content="60 тем выпускных и научных работ по применению машинного обучения в нефтегазовой отрасли: разработка месторождений, газ, бурение, геология, транспорт, переработка.">
 <meta property="og:url" content="https://leonovdmitriy174.github.io/PhD/">
 <link rel="canonical" href="https://leonovdmitriy174.github.io/PhD/">
+<meta property="og:image" content="https://leonovdmitriy174.github.io/PhD/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Машинное обучение в нефтегазовой отрасли: 60 тем исследований">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230D5B64'/%3E%3Cpath d='M32 10C32 10 17 29 17 39a15 15 0 0 0 30 0C47 29 32 10 32 10z' fill='%23fff'/%3E%3Cpath d='M26 36L38 42L26 48' fill='none' stroke='%230D5B64' stroke-width='2.4'/%3E%3Ccircle cx='26' cy='36' r='3.4' fill='%230D5B64'/%3E%3Ccircle cx='26' cy='48' r='3.4' fill='%230D5B64'/%3E%3Ccircle cx='38' cy='42' r='4.4' fill='%23A8691A'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -96,6 +102,11 @@ details[open] summary::before{content:"−"}
 dl.facts{display:grid;grid-template-columns:170px 1fr;gap:8px 16px;margin:10px 0 2px;font-size:14px}
 dl.facts dt{font:500 12px/1.4 var(--f-mono);letter-spacing:.03em;color:var(--muted);text-transform:uppercase;padding-top:2px}
 dl.facts dd{margin:0;min-width:0}
+.permalink{display:inline-block;margin-top:8px;font:500 12px/1.2 var(--f-body);color:var(--muted);text-decoration:none}
+.permalink:hover,.permalink:focus-visible{color:var(--accent)}
+.topic.flash{animation:flash 2.4s ease-out}
+@keyframes flash{0%,35%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion: reduce){.topic.flash{animation:none;box-shadow:0 0 0 3px var(--accent)}}
 .empty{padding:28px;text-align:center;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);margin-top:24px}
 
 .tray{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--ink);color:var(--bg);padding-top:10px;padding-bottom:max(10px,env(safe-area-inset-bottom,0px))}
@@ -608,6 +619,7 @@ function match(t){
   return true;
 }
 
+const LINK_LABEL = '🔗 Ссылка на эту тему';
 function topicHTML(t){
   const on = marks.has(t.n);
   return '<article class="topic' + (on ? ' marked' : '') + '" id="t' + t.n.replace('.', '-') + '">'
@@ -623,7 +635,7 @@ function topicHTML(t){
     + '<dt>Результат работы</dt><dd>' + esc(t.res) + '</dd>'
     + '<dt>Научная перспектива</dt><dd>' + esc(t.phd) + '</dd>'
     + '<dt>Специальность</dt><dd>' + esc(t.s) + '</dd>'
-    + '</dl></details></article>';
+    + '</dl><a class="permalink" href="#t' + t.n.replace('.', '-') + '">' + LINK_LABEL + '</a></details></article>';
 }
 
 const list = document.getElementById('list');
@@ -679,9 +691,40 @@ function showView(){
   document.querySelectorAll('nav.views a').forEach(a => { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   updateContact();
 }
-window.addEventListener('hashchange', () => { showView(); window.scrollTo(0, 0); });
+// ---------- ссылка на конкретную тему: …/#t3-1 ----------
+function topicFromHash(){ const m = location.hash.match(/^#t(\d+)-(\d+)$/); return m ? m[1] + '.' + m[2] : null; }
+function focusTopic(n){
+  const id = 't' + n.replace('.', '-');
+  if (!document.getElementById(id)) {
+    Object.assign(state, {dir:'all', pa:false, pb:false, rec:false, mine:false, q:''});
+    document.getElementById('q').value = '';
+    render();
+  }
+  const el = document.getElementById(id);
+  if (!el) return;
+  const details = el.querySelector('details');
+  if (details) details.open = true;
+  const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  el.scrollIntoView({block:'center', behavior: calm ? 'auto' : 'smooth'});
+  el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+}
+list.addEventListener('click', e => {
+  const a = e.target.closest('.permalink');
+  if (!a || !navigator.clipboard) return;
+  navigator.clipboard.writeText(location.href.split('#')[0] + a.getAttribute('href')).then(() => {
+    a.textContent = '✓ Ссылка скопирована';
+    setTimeout(() => { a.textContent = LINK_LABEL; }, 2000);
+  }, () => {});
+});
+
+window.addEventListener('hashchange', () => {
+  showView();
+  const n = topicFromHash();
+  if (n) focusTopic(n); else window.scrollTo(0, 0);
+});
 showView();
 render();
+if (topicFromHash()) requestAnimationFrame(() => focusTopic(topicFromHash()));
 </script>
 </body>
 </html>
